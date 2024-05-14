@@ -3,6 +3,7 @@
 #include <string.h>
 #include "cdataframe.h"
 
+// Fonction : Crée un nouveau DataFrame vide
 CDataframe *create_dataframe() {
     CDataframe *df = (CDataframe *)malloc(sizeof(CDataframe));
     if (df == NULL) {
@@ -14,6 +15,7 @@ CDataframe *create_dataframe() {
     return df;
 }
 
+// Fonction : Ajoute une colonne à un DataFrame existant
 int add_column_to_dataframe(CDataframe *df, COLUMN_OPS *col) {
     if (df == NULL || col == NULL) return 0;
     int new_size = df->num_columns + 1;
@@ -27,6 +29,7 @@ int add_column_to_dataframe(CDataframe *df, COLUMN_OPS *col) {
     return 1;
 }
 
+// Fonction : Supprime un DataFrame et libère sa mémoire
 void delete_dataframe(CDataframe **df) {
     if (*df == NULL) return;
     for (int i = 0; i < (*df)->num_columns; i++) {
@@ -37,6 +40,7 @@ void delete_dataframe(CDataframe **df) {
     *df = NULL;
 }
 
+// Fonction : Affiche les données stockées dans un DataFrame
 void print_dataframe(CDataframe *df) {
     if (df == NULL || df->columns == NULL) return;
     for (int i = 0; i < df->num_columns; i++) {
@@ -45,6 +49,7 @@ void print_dataframe(CDataframe *df) {
     }
 }
 
+// Fonction : Sauvegarde les données d'un DataFrame dans un fichier CSV
 int save_dataframe_to_csv(CDataframe *df, const char *filename) {
     if (df == NULL || filename == NULL) return 0;
     FILE *file = fopen(filename, "w");
@@ -75,7 +80,7 @@ int save_dataframe_to_csv(CDataframe *df, const char *filename) {
                     fprintf(file, "%s", (char *)col->data[j]);
                     break;
                 case STRUCT_TYPE:
-                    // Handle printing of struct type
+                    // Gérer l'impression du type struct
                     break;
                 default:
                     fprintf(stderr, "Invalid column type\n");
@@ -90,6 +95,7 @@ int save_dataframe_to_csv(CDataframe *df, const char *filename) {
     return 1;
 }
 
+// Fonction : Charge les données d'un fichier CSV dans un DataFrame
 CDataframe *load_dataframe_from_csv(const char *filename) {
     if (filename == NULL) return NULL;
     FILE *file = fopen(filename, "r");
@@ -103,10 +109,10 @@ CDataframe *load_dataframe_from_csv(const char *filename) {
     while (fgets(line, sizeof(line), file)) {
         char *token = strtok(line, ",");
         while (token != NULL) {
-            // Create a new column and insert value
+            // Crée une nouvelle colonne et insère la valeur
             COLUMN_OPS *col = create_column_ops(STRING_TYPE);
             insert_value_ops(col, token);
-            // Add column to dataframe
+            // Ajoute la colonne au DataFrame
             add_column_to_dataframe(df, col);
             token = strtok(NULL, ",");
         }
