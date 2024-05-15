@@ -3,7 +3,7 @@
 #include <string.h>
 #include "cdataframe.h"
 
-// Fonction : Crée un nouveau DataFrame vide
+// Crée un nouveau dataframe vide
 CDataframe *create_dataframe() {
     CDataframe *df = (CDataframe *)malloc(sizeof(CDataframe));
     if (df == NULL) {
@@ -15,7 +15,7 @@ CDataframe *create_dataframe() {
     return df;
 }
 
-// Fonction : Ajoute une colonne à un DataFrame existant
+// Ajoute une colonne au dataframe spécifié
 int add_column_to_dataframe(CDataframe *df, COLUMN_OPS *col) {
     if (df == NULL || col == NULL) return 0;
     int new_size = df->num_columns + 1;
@@ -29,7 +29,7 @@ int add_column_to_dataframe(CDataframe *df, COLUMN_OPS *col) {
     return 1;
 }
 
-// Fonction : Supprime un DataFrame et libère sa mémoire
+// Supprime le dataframe et libère la mémoire
 void delete_dataframe(CDataframe **df) {
     if (*df == NULL) return;
     for (int i = 0; i < (*df)->num_columns; i++) {
@@ -40,62 +40,16 @@ void delete_dataframe(CDataframe **df) {
     *df = NULL;
 }
 
-// Fonction : Affiche les données stockées dans un DataFrame
+// Affiche le dataframe dans la console
 void print_dataframe(CDataframe *df) {
     if (df == NULL || df->columns == NULL) return;
     for (int i = 0; i < df->num_columns; i++) {
         printf("Column %d:\n", i + 1);
-        print_col_ops(df->columns[i]);
+        print_col_ops(df->columns[i], -1); // Imprime toutes les lignes
     }
 }
 
-// Fonction : Sauvegarde les données d'un DataFrame dans un fichier CSV
-int save_dataframe_to_csv(CDataframe *df, const char *filename) {
-    if (df == NULL || filename == NULL) return 0;
-    FILE *file = fopen(filename, "w");
-    if (file == NULL) {
-        fprintf(stderr, "Failed to open file for writing\n");
-        return 0;
-    }
-    for (int i = 0; i < df->num_columns; i++) {
-        COLUMN_OPS *col = df->columns[i];
-        for (int j = 0; j < col->size; j++) {
-            switch (col->type) {
-                case UINT_TYPE:
-                    fprintf(file, "%u", *((unsigned int *)col->data[j]));
-                    break;
-                case INT_TYPE:
-                    fprintf(file, "%d", *((int *)col->data[j]));
-                    break;
-                case CHAR_TYPE:
-                    fprintf(file, "%c", *((char *)col->data[j]));
-                    break;
-                case FLOAT_TYPE:
-                    fprintf(file, "%f", *((float *)col->data[j]));
-                    break;
-                case DOUBLE_TYPE:
-                    fprintf(file, "%lf", *((double *)col->data[j]));
-                    break;
-                case STRING_TYPE:
-                    fprintf(file, "%s", (char *)col->data[j]);
-                    break;
-                case STRUCT_TYPE:
-                    // Gérer l'impression du type struct
-                    break;
-                default:
-                    fprintf(stderr, "Invalid column type\n");
-                    fclose(file);
-                    return 0;
-            }
-            if (j < col->size - 1) fprintf(file, ",");
-        }
-        fprintf(file, "\n");
-    }
-    fclose(file);
-    return 1;
-}
-
-// Fonction : Charge les données d'un fichier CSV dans un DataFrame
+// Charge un dataframe à partir d'un fichier CSV
 CDataframe *load_dataframe_from_csv(const char *filename) {
     if (filename == NULL) return NULL;
     FILE *file = fopen(filename, "r");
@@ -109,10 +63,8 @@ CDataframe *load_dataframe_from_csv(const char *filename) {
     while (fgets(line, sizeof(line), file)) {
         char *token = strtok(line, ",");
         while (token != NULL) {
-            // Crée une nouvelle colonne et insère la valeur
             COLUMN_OPS *col = create_column_ops(STRING_TYPE);
             insert_value_ops(col, token);
-            // Ajoute la colonne au DataFrame
             add_column_to_dataframe(df, col);
             token = strtok(NULL, ",");
         }
@@ -120,4 +72,126 @@ CDataframe *load_dataframe_from_csv(const char *filename) {
 
     fclose(file);
     return df;
+}
+
+// Sauvegarde le dataframe dans un fichier CSV
+int save_dataframe_to_csv(CDataframe *df, const char *filename) {
+    if (df == NULL || filename == NULL) return 0;
+    FILE *file = fopen(filename, "a"); // Ouvre le fichier en mode ajout
+    if (file == NULL) {
+        fprintf(stderr, "Failed to open file for writing\n");
+        return 0;
+    }
+
+    int max_rows = 0;
+    for (int i = 0; i < df->num_columns; i++) {
+        if (df->columns[i]->size > max_rows) {
+            max_rows = df->columns[i]->size;
+        }
+    }
+    for (int row = 0; row < max_rows; row++) {
+        for (int col = 0; col < df->num_columns; col++) {
+            COLUMN_OPS *current_col = df->columns[col];
+            if (row < current_col->size) {
+                switch (current_col->type) {
+                    case INT_TYPE:
+                        fprintf(file, "%d", *((int *)current_col->data[row]));
+                        break;
+                    case STRING_TYPE:
+                        fprintf(file, "%s", (char *)current_col->data[row]);
+                        break;
+                    case FLOAT_TYPE:
+                        fprintf(file, "%.4f", *((float *)current_col->data[row]));
+                        break;
+                    default:
+                        fprintf(stderr, "Invalid column type\n");
+                        fclose(file);
+                        return 0;
+                }
+            }
+            if (col < df->num_columns - 1) {
+                fprintf(file, ",");
+            }
+        }
+        fprintf(file, "\n");
+    }
+    fclose(file);
+    return 1;
+}
+
+// Remplit le dataframe avec des entrées fournies par l'utilisateur
+void fill_dataframe_with_user_input(CDataframe *df) {
+    if (df == NULL) return;
+    int num_cols;
+    printf("Enter number of columns: ");
+    scanf("%d", &num_cols);
+    for (int i = 0; i < num_cols; i++) {
+        int size;
+        printf("Enter size of column %d: ", i + 1);
+        scanf("%d", &size);
+        COLUMN_OPS *col = create_column_ops(STRING_TYPE);
+        for (int j = 0; j < size; j++) {
+            char *value = (char *)malloc(100 * sizeof(char));
+            printf("Enter value for column %d, row %d (Integer, String, or Float): ", i + 1, j + 1);
+            scanf("%s", value);
+            insert_value_ops(col, value);
+        }
+        add_column_to_dataframe(df, col);
+    }
+}
+
+// Remplit le dataframe avec des données prédéfinies (remplissage "dur")
+void hard_fill_dataframe(CDataframe *df) {
+    if (df == NULL) return;
+    COLUMN_OPS *col1 = create_column_ops(INT_TYPE);
+    insert_value_ops(col1, &(int){52});
+    insert_value_ops(col1, &(int){44});
+    insert_value_ops(col1, &(int){15});
+    add_column_to_dataframe(df, col1);
+
+    COLUMN_OPS *col2 = create_column_ops(STRING_TYPE);
+    insert_value_ops(col2, "Lima");
+    insert_value_ops(col2, "Bravo");
+    insert_value_ops(col2, "Zulu");
+    add_column_to_dataframe(df, col2);
+
+    COLUMN_OPS *col3 = create_column_ops(FLOAT_TYPE);
+    insert_value_ops(col3, &(float){1.158});
+    insert_value_ops(col3, &(float){9.135});
+    insert_value_ops(col3, &(float){6.588});
+    add_column_to_dataframe(df, col3);
+}
+
+// Affiche l'intégralité du dataframe
+void display_entire_dataframe(CDataframe *df) {
+    if (df == NULL || df->columns == NULL) return;
+    printf("Entire Dataframe:\n");
+    print_dataframe(df);
+}
+
+// Affiche un nombre limité de lignes du dataframe
+void display_partial_rows(CDataframe *df, int limit) {
+    if (df == NULL || limit <= 0) {
+        printf("Invalid dataframe or limit.\n");
+        return;
+    }
+    printf("Partial Dataframe (first %d rows):\n", limit);
+    for (int i = 0; i < df->num_columns; i++) {
+        printf("Column %d:\n", i + 1);
+        print_col_ops(df->columns[i], limit);
+    }
+}
+
+// Affiche un nombre limité de colonnes du dataframe
+void display_partial_columns(CDataframe *df, int limit) {
+    if (df == NULL || limit <= 0 || limit > df->num_columns) {
+        printf("Invalid dataframe or limit.\n");
+        return;
+    }
+
+    printf("Partial Dataframe (first %d columns):\n", limit);
+    for (int i = 0; i < limit; i++) {
+        printf("Column %d:\n", i + 1);
+        print_col_ops(df->columns[i], -1); // Imprime toutes les lignes
+    }
 }
