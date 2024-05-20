@@ -1,9 +1,12 @@
+//CDataframe
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "cdataframe.h"
 
-// Crée un nouveau dataframe vide
+
+
+// Crée une nouvelle structure de dataframe
 CDataframe *create_dataframe() {
     CDataframe *df = (CDataframe *)malloc(sizeof(CDataframe));
     if (df == NULL) {
@@ -15,7 +18,7 @@ CDataframe *create_dataframe() {
     return df;
 }
 
-// Ajoute une colonne au dataframe spécifié
+// Ajoute une colonne au dataframe
 int add_column_to_dataframe(CDataframe *df, COLUMN_OPS *col) {
     if (df == NULL || col == NULL) return 0;
     int new_size = df->num_columns + 1;
@@ -28,7 +31,6 @@ int add_column_to_dataframe(CDataframe *df, COLUMN_OPS *col) {
     df->columns[df->num_columns++] = col;
     return 1;
 }
-
 // Supprime le dataframe et libère la mémoire
 void delete_dataframe(CDataframe **df) {
     if (*df == NULL) return;
@@ -39,8 +41,7 @@ void delete_dataframe(CDataframe **df) {
     free(*df);
     *df = NULL;
 }
-
-// Affiche le dataframe dans la console
+// Affiche le dataframe
 void print_dataframe(CDataframe *df) {
     if (df == NULL || df->columns == NULL) return;
     for (int i = 0; i < df->num_columns; i++) {
@@ -49,7 +50,7 @@ void print_dataframe(CDataframe *df) {
     }
 }
 
-// Charge un dataframe à partir d'un fichier CSV
+// Charge un dataframe depuis un fichier CSV
 CDataframe *load_dataframe_from_csv(const char *filename) {
     if (filename == NULL) return NULL;
     FILE *file = fopen(filename, "r");
@@ -74,7 +75,7 @@ CDataframe *load_dataframe_from_csv(const char *filename) {
     return df;
 }
 
-// Sauvegarde le dataframe dans un fichier CSV
+// Enregistre un dataframe dans un fichier CSV
 int save_dataframe_to_csv(CDataframe *df, const char *filename) {
     if (df == NULL || filename == NULL) return 0;
     FILE *file = fopen(filename, "a"); // Ouvre le fichier en mode ajout
@@ -118,8 +119,7 @@ int save_dataframe_to_csv(CDataframe *df, const char *filename) {
     fclose(file);
     return 1;
 }
-
-// Remplit le dataframe avec des entrées fournies par l'utilisateur
+// Remplit le dataframe avec des entrées utilisateur
 void fill_dataframe_with_user_input(CDataframe *df) {
     if (df == NULL) return;
     int num_cols;
@@ -139,8 +139,7 @@ void fill_dataframe_with_user_input(CDataframe *df) {
         add_column_to_dataframe(df, col);
     }
 }
-
-// Remplit le dataframe avec des données prédéfinies (remplissage "dur")
+// Remplit le dataframe avec des valeurs prédéfinies
 void hard_fill_dataframe(CDataframe *df) {
     if (df == NULL) return;
     COLUMN_OPS *col1 = create_column_ops(INT_TYPE);
@@ -161,14 +160,12 @@ void hard_fill_dataframe(CDataframe *df) {
     insert_value_ops(col3, &(float){6.588});
     add_column_to_dataframe(df, col3);
 }
-
-// Affiche l'intégralité du dataframe
+// Affiche tout le dataframe
 void display_entire_dataframe(CDataframe *df) {
     if (df == NULL || df->columns == NULL) return;
     printf("Entire Dataframe:\n");
     print_dataframe(df);
 }
-
 // Affiche un nombre limité de lignes du dataframe
 void display_partial_rows(CDataframe *df, int limit) {
     if (df == NULL || limit <= 0) {
@@ -181,7 +178,6 @@ void display_partial_rows(CDataframe *df, int limit) {
         print_col_ops(df->columns[i], limit);
     }
 }
-
 // Affiche un nombre limité de colonnes du dataframe
 void display_partial_columns(CDataframe *df, int limit) {
     if (df == NULL || limit <= 0 || limit > df->num_columns) {
@@ -195,3 +191,84 @@ void display_partial_columns(CDataframe *df, int limit) {
         print_col_ops(df->columns[i], -1); // Imprime toutes les lignes
     }
 }
+// Supprime une colonne du dataframe
+void delete_column_from_dataframe(CDataframe *df, int index) {
+    if (df == NULL || index < 0 || index >= df->num_columns) {
+        printf("Invalid dataframe or index.\n");
+        return;
+    }
+
+    delete_column_ops(&(df->columns[index]));
+
+    // Décale les colonnes restantes pour combler le vide
+    for (int i = index; i < df->num_columns - 1; i++) {
+        df->columns[i] = df->columns[i + 1];
+    }
+
+    // Réduit le nombre de colonnes
+    df->num_columns--;
+
+    // Redimensionne le tableau des colonnes
+    COLUMN_OPS **new_columns = realloc(df->columns, df->num_columns * sizeof(COLUMN_OPS *));
+    if (new_columns == NULL && df->num_columns > 0) {
+        fprintf(stderr, "Memory reallocation failed\n");
+        exit(1);
+    }
+    df->columns = new_columns;
+}
+
+void delete_value_ops(COLUMN_OPS **col, int index) {
+    if (*col == NULL || index < 0 || index >= (*col)->size) return;
+
+    // libere la value de linde
+    switch ((*col)->type) {
+        case INT_TYPE:
+            // pas de dynamique input
+            break;
+        case STRING_TYPE:
+            free((*col)->data[index]);
+            break;
+        case FLOAT_TYPE:
+            // No float
+            break;
+        default:
+            fprintf(stderr, "Invalid column type\n");
+            exit(1);
+    }
+
+    // pousse les valeurs a gauche
+    for (int i = index; i < (*col)->size - 1; i++) {
+        switch ((*col)->type) {
+            case INT_TYPE:
+                *((int *)((*col)->data[i])) = *((int *)((*col)->data[i + 1]));
+                break;
+            case STRING_TYPE:
+                (*col)->data[i] = strdup((*col)->data[i + 1]);
+                break;
+            case FLOAT_TYPE:
+                *((float *)((*col)->data[i])) = *((float *)((*col)->data[i + 1]));
+                break;
+            default:
+                fprintf(stderr, "Invalid column type\n");
+                exit(1);
+        }
+    }
+
+
+    (*col)->size--;
+}
+
+void delete_row_from_dataframe(CDataframe *df, int row_index) {
+    if (df == NULL || row_index < 0) return;
+
+    for (int i = 0; i < df->num_columns; i++) {
+        if (row_index >= df->columns[i]->size) {
+
+            continue;
+        }
+
+        delete_value_ops(&(df->columns[i]), row_index);
+    }
+}
+
+
