@@ -1,9 +1,10 @@
 Réaliser par les eleves de Efrei Ahmed Jaafar
                                  Hamza El ferdi
                                  Joan Oyono
+                                 
+Lien Github: https://github.com/Ahmed9477/Dataframe.git
 
-
-Le programe est super simple à lancer, il suffit de doubvle cliquer sur dataframe_app.exe et c'est bon!!
+Instruction : Le programe est super simple à lancer, il suffit de doubvle cliquer sur dataframe_app.exe et c'est bon!!
 ou pour faire compliquer:
 Ouvrir l'invite de commandes : Recherchez "cmd" dans la barre de recherche de Windows et cliquez sur "Invite de commandes" pour l'ouvrir.
 
@@ -22,3 +23,13 @@ cdataframe.c et .h
 column_operation.c et .h
 common.h
 main.c
+
+Probleme rencontré : Lors de notre projet, nous avons rencontré des difficultés liées à l'intégration et à l'utilisation de GitHub avec CLion. Le problème principal était que seul un membre de l'équipe a réussi à effectuer des commits vers le dépôt GitHub. Les autres membres ont rencontré des obstacles techniques et opérationnels qui les ont empêchés de participer efficacement à la gestion du code source.
+
+
+
+
+
+
+
+
