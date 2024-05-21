@@ -10,7 +10,7 @@ void display_menu() {
     printf("3. charger un Dataframe par excel\n");
     printf("4. creer un dataframe vide\n");
     printf("5. remplir le dataframe\n");
-    printf("6. Trame de données à remplissage dur\n");
+    printf("6. Hard fill dataframe\n");
     printf("8. montre que certaine ligne\n");
     printf("9. montre certain collone\n");
     printf("10. suprimer une colonne\n");
